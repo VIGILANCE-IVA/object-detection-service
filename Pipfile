@@ -4,11 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+yolo-core = {git = "https://github.com/VIGILANCE-IVA/yolo-core.git"}
+core-utils = {git = "https://github.com/VIGILANCE-IVA/core-utils.git"}
 aiohttp = "*"
 aiohttp-cors = "*"
-yolo-core = {git = "https://github.com/VIGILANCE-IVA/yolo-core.git"}
 
 [dev-packages]
 
 [requires]
-python_version = "3.7"
+python_version = "3.6"

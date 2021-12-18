@@ -4,7 +4,7 @@ import cv2 as cv
 import numpy as np
 from aiohttp.web import Response, View
 from aiohttp_cors import CorsViewMixin
-from utils import jsonify
+from core_utils.json import jsonify
 from yolo import model
 
 
