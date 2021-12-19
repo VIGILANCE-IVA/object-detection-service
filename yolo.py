@@ -1,5 +1,7 @@
 import os
 
+from numpy.core.records import array
+
 # comment out below line to enable tensorflow outputs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
@@ -22,7 +24,6 @@ class YoloModel:
     def __init__(self, conf=config.detector):
         self.loaded = {}
         self.config = conf
-        self.allowed_classes = []
         self.load_model()
 
     def load_model(self):
@@ -31,11 +32,11 @@ class YoloModel:
         else:
             self.saved_model_loaded = tf.saved_model.load(self.config['weights'], tags=[tag_constants.SERVING])
 
-    def set_allowed_classes(self, allowed_classes):
-        self.allowed_classes = allowed_classes
-
-    async def predict(self, original_image):
+    def predict(self, original_image, allowed_classes):
         input_size = self.config['size']
+        
+        if not isinstance(allowed_classes, list):
+            allowed_classes = []
 
         if isinstance(original_image, str):
             original_image = cv2.imread(original_image)
@@ -92,17 +93,17 @@ class YoloModel:
         detection = [bboxes, scores.numpy()[0], classes.numpy()[0], valid_detections.numpy()[0]]
         
         # format and return predictions
-        return self.format_output(detection)
+        return self.format_output(detection, allowed_classes)
 
-    def format_output(self, detection):
+    def format_output(self, detection, pred_allowed_classes):
         predictions = []
         classes = utils.read_class_names(self.config['classes'])
         num_classes = len(classes)
 
         allowed_classes = list(classes.values())
 
-        if len(self.allowed_classes):
-            allowed_classes = self.allowed_classes
+        if len(pred_allowed_classes):
+            allowed_classes = pred_allowed_classes
 
         out_boxes, out_scores, out_classes, num_boxes = detection
 
