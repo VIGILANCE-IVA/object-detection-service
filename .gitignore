@@ -1,4 +1,7 @@
 __pycache__/
 *.weights
+*.jpg
+*.mp4
+*.png
 checkpoints/
 .idea

@@ -1,6 +1,9 @@
 from collections import OrderedDict
 
-detector = OrderedDict([
+
+class Config:
+  def __init__(self):
+     self.__dict__ = OrderedDict([
     ('weights', './checkpoints/yolov4-416'), # path to weights file
     ('classes', './data/classes/coco.names'), # path to classes
     ('model', 'yolov4'), # yolov3 or yolov4
@@ -16,3 +19,6 @@ detector = OrderedDict([
     ('plate', False), # perform license plate recognition
     ('ocr', False) # perform generic OCR on detection regions
 ])
+
+
+config = Config()

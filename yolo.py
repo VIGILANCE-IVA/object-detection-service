@@ -1,7 +1,5 @@
 import os
 
-from numpy.core.records import array
-
 # comment out below line to enable tensorflow outputs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
@@ -17,23 +15,36 @@ from tensorflow.python.saved_model import tag_constants
 from yolo_core.functions import *
 from yolo_core.yolov4 import filter_boxes
 
-import config
+from model_config import config
 
 
 class YoloModel:
-    def __init__(self, conf=config.detector):
-        self.loaded = {}
+    def __init__(self, conf=config):
+        self.loaded = False
         self.config = conf
         self.load_model()
 
-    def load_model(self):
-        if self.config['framework'] == 'tflite':
-            self.interpreter = tf.lite.Interpreter(model_path=self.config['weights'])
-        else:
-            self.saved_model_loaded = tf.saved_model.load(self.config['weights'], tags=[tag_constants.SERVING])
+    def set_config(self, config):
+        self.config = config
+        self.load_model()
 
-    def predict(self, original_image, allowed_classes):
-        input_size = self.config['size']
+    def load_model(self):
+        weights_exists = os.path.exists(self.config.weights)
+        classes_exists = os.path.exists(self.config.classes)
+
+        if weights_exists and classes_exists:
+            if self.config.framework == 'tflite':
+                self.interpreter = tf.lite.Interpreter(model_path=self.config.weights)
+                self.loaded = True
+            else:
+                self.saved_model_loaded = tf.saved_model.load(self.config.weights, tags=[tag_constants.SERVING])
+                self.loaded = True
+
+    def predict(self, original_image, allowed_classes=[]):
+        if not self.loaded:
+            raise Exception("Model not loaded!")
+
+        input_size = self.config.size
         
         if not isinstance(allowed_classes, list):
             allowed_classes = []
@@ -50,7 +61,7 @@ class YoloModel:
             images_data.append(image_data)
         images_data = np.asarray(images_data).astype(np.float32)
 
-        if self.config['framework'] == 'tflite':
+        if self.config.framework == 'tflite':
             self.interpreter.allocate_tensors()
             input_details = self.interpreter.get_input_details()
             output_details = self.interpreter.get_output_details()
@@ -58,7 +69,7 @@ class YoloModel:
             self.interpreter.invoke()
             pred = [self.interpreter.get_tensor(output_details[i]['index']) for i in range(len(output_details))]
 
-            if self.config['model'] == 'yolov3' and self.config['tiny'] == True:
+            if self.config.model == 'yolov3' and self.config.tiny == True:
                 boxes, pred_conf = filter_boxes(pred[1], pred[0], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
             else:
                 boxes, pred_conf = filter_boxes(pred[0], pred[1], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
@@ -77,8 +88,8 @@ class YoloModel:
                 pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
             max_output_size_per_class=50,
             max_total_size=50,
-            iou_threshold=self.config['iou'],
-            score_threshold=self.config['score']
+            iou_threshold=self.config.iou,
+            score_threshold=self.config.score
         )
 
         # format bounding boxes from normalized ymin, xmin, ymax, xmax ---> xmin, ymin, xmax, ymax
@@ -97,7 +108,7 @@ class YoloModel:
 
     def format_output(self, detection, pred_allowed_classes):
         predictions = []
-        classes = utils.read_class_names(self.config['classes'])
+        classes = utils.read_class_names(self.config.classes)
         num_classes = len(classes)
 
         allowed_classes = list(classes.values())
