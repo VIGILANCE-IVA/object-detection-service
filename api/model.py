@@ -20,8 +20,7 @@ class ModelApi(View, CorsViewMixin):
                 f = open(file_path, "wb")
                 f.write(item.file.read())
                 f.close()
-                
-        # convert model
+
         if 'weights' in files:
             config.weights = files['weights']
             if 'classes' in files:

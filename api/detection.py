@@ -11,49 +11,34 @@ from yolo_video import yolo_video
 
 class DetectionApi(View, CorsViewMixin):
     async def post(self):
-        try:
-            body = await self.request.post()
-            try: 
-                # set allowed classes
-                allowed_classes = json.loads(body['allowed_classes'])
-            except:
-                allowed_classes = []
+        body = await self.request.post()
+        try: 
+            # set allowed classes
+            allowed_classes = json.loads(body['allowed_classes'])
+        except:
+            allowed_classes = []
 
-            # decode image
-            img = cv.imdecode(np.fromstring(body['image'].file.read(), np.uint8), cv.IMREAD_UNCHANGED)
-            predictions = model.predict(img, allowed_classes)
+        # decode image
+        img = cv.imdecode(np.fromstring(body['image'].file.read(), np.uint8), cv.IMREAD_UNCHANGED)
+        predictions = model.predict(img, allowed_classes)
 
-            return Response(
-                text=jsonify(predictions),
-                content_type="application/json",
-                status=200
-            )
+        return Response(
+            text=jsonify(predictions),
+            content_type="application/json",
+            status=200
+        )
 
-        except BaseException as e:
-            return Response(
-                text=json.dumps({'message': str(e)}),
-                content_type="application/json",
-                status=400
-            )
 
 class VideoDetectionApi(View, CorsViewMixin):
     async def post(self):
-        try:
-            body = await self.request.json()
-            task_id = await yolo_video.add_task(body)
+        body = await self.request.json()
+        task_id = await yolo_video.add_task(body)
 
-            return Response(
-                text=jsonify({'task_id': task_id }),
-                content_type="application/json",
-                status=200
-            )
-
-        except BaseException as e:
-            return Response(
-                text=json.dumps({'message': str(e)}),
-                content_type="application/json",
-                status=400
-            )
+        return Response(
+            text=jsonify({'task_id': task_id }),
+            content_type="application/json",
+            status=200
+        )
 
     async def put(self):
         body = await self.request.json()
