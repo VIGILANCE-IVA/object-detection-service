@@ -1,7 +1,7 @@
 import uuid
 from collections import OrderedDict
+from urllib import request
 
-import requests
 from camera_threading.streamer import Capture
 from core_utils.json import jsonify
 
@@ -13,7 +13,12 @@ class YoloVideo:
         self.tasks = OrderedDict()
 
     def webhook(self, url, data):
-        requests.post(url, json = jsonify(data))
+        try:
+            req = request.Request(url, data=jsonify(data).encode())
+            req.add_header('Content-Type', 'application/json')
+            request.urlopen(req)
+        except Exception as e:
+            print(str(e))
 
     async def add_task(self, data):
         if 'webhook' not in data:
